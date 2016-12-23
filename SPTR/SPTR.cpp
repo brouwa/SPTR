@@ -5,6 +5,7 @@
 
 #include "RoadNetwork.h"
 #include "Hashtable.h"
+#include<time.h>
 
 using namespace std;
 
@@ -16,15 +17,21 @@ int main()
 {
 
 	RoadNetwork rn;
+	Vertex *source;
 
 	ifstream myfile;
-	myfile.open("C:\\Users\\Yassir\\Downloads\\RoadNetworks\\data\\france.in");
+	myfile.open("C:\\Users\\Benoît\\Desktop\\RoadNetworks\\data\\france.in");
 	
 	unsigned id;
 	int lat, lon;
 	unsigned int p1, p2;
 	int t;
 
+	double temps;
+	clock_t start;
+
+	cout << "Lecture du fichier de donnees..." << endl;
+	start = clock();
 	if (myfile.is_open())
 	{
 		do
@@ -44,8 +51,21 @@ int main()
 		} while (!myfile.eof());
 	}
 	myfile.close();
+
+	temps = (double)(clock() - start) / (double)CLOCKS_PER_SEC;
+	cout << "Lecture terminee, en ";
+	cout << temps;
+	cout << " secondes" << endl;
+
 	
-	rn.Dijkstra(rn.select_first());
+	//rn.Dijkstra(rn.select_first());
+	// france rn.Dijkstra(rn.select_vertex(2363100, 48842841));
+	// malte source = rn.select_vertex_coords(14288652, 36023845);
+	source = rn.select_vertex_id(1760418226);
+	if (source == nullptr)	source = rn.select_first();
+
+	rn.Dijkstra(source);
+
 
 	system("PAUSE");
 	return EXIT_SUCCESS;
