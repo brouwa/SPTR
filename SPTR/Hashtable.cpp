@@ -1,10 +1,10 @@
 #include "stdafx.h"
 #include "Hashtable.h"
 
-//template <typename T, typename K> Hashtable<T,K>::~Hashtable()
-//{
-// insert your code here
-//}
+template <typename T, typename K> Hashtable<T,K>::~Hashtable()
+{
+	delete[] E;
+}
 
 template <typename T, typename K> int Hashtable<T, K>::size()
 {

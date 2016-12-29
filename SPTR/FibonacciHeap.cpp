@@ -2,17 +2,30 @@
 #include "FibonacciHeap.h"
 
 
-//FibonacciHeap::~FibonacciHeap()
-//{
-//}
+template <typename T> FibonacciHeap<T>::~FibonacciHeap()
+{
+	if (nodeDeg != nullptr) delete[] nodeDeg;
+	if (nodes != nullptr) clean(nodes);
+}
 
+template <typename T> void FibonacciHeap<T>::clean(FHChain<T*> *d)
+{
+	FHChain<T*> *c = d;
+	do
+	{
+		if (c->childs != nullptr)clean(c->childs);
+		c = c->next;
+	} while (c != d);
+	delete d;
+}
 
 template <typename T> void FibonacciHeap<T>::add(T* el, int p)
 {
+	el->t = p;
 	if (nodes == nullptr) 
 	{
-		el->me = new DLChain<T*>(el);
-		nodes = el->me;
+		el->myFHc = new FHChain<T*>(el);
+		nodes = el->myFHc;
 		nodes->prev = nodes;
 		nodes->next = nodes;
 
@@ -20,21 +33,22 @@ template <typename T> void FibonacciHeap<T>::add(T* el, int p)
 	}
 	else
 	{
-		el->me = new DLChain<T*>(el, nodes->prev, nodes);
-		nodes->prev->next = el->me;
-		nodes->prev = el->me;
+		el->myFHc = new FHChain<T*>(el, nodes->prev, nodes);
+		nodes->prev->next = el->myFHc;
+		nodes->prev = el->myFHc;
 
-		if (el->t < minnode->v->t) minnode = el->me;
+		if (el->t < minnode->v->t) minnode = el->myFHc;
 	}
 	n++;
 	nbnodes++;
 }
 
-template <typename T> void FibonacciHeap<T>::generate_nodedeg()
+template <typename T> void FibonacciHeap<T>::generate_nodeDeg(int size)
 {
-	maxnodesnb = (int)(log(sqrt(5)*n) / log(phi))+50;
+	maxnodesnb = (int)(log(sqrt(5)*size) / log(phi));
 	if (nodeDeg != nullptr) delete[] nodeDeg;
-	nodeDeg = new DLChain<T*>*[maxnodesnb];
+	nodeDeg = new FHChain<T*>*[maxnodesnb];
+	for (int i = 0; i < maxnodesnb; i++) nodeDeg[i] = nullptr;
 }
 
 template <typename T> bool FibonacciHeap<T>::isEmpty()
@@ -42,186 +56,125 @@ template <typename T> bool FibonacciHeap<T>::isEmpty()
 	return nodes == nullptr;
 }
 
-template <typename T> void FibonacciHeap<T>::merge(DLChain<T*> *L1, DLChain<T*> *L2)
-{
-	L1->prev->next = L2;
-	L2->prev->next = L1;
-	DLChain<T*> *tmp = L1->prev;
-	L1->prev = L2->prev;
-	L2->prev = tmp;
-}
 
-template <typename T> void FibonacciHeap<T>::insert(DLChain<T*> *c, DLChain<T*> *L)
-{
-	//couper c de sa chaine
-	c->next->prev = c->prev;
-	c->prev->next = c->next;
 
-	//inserer c dans L
-	c->prev = L->prev;
-	c->next = L;
-	L->prev->next = c;
-	L->prev = c;
-}
-
-Vertex *FibonacciHeap<struct Vertex>::ext_min(Hashtable<Vertex, unsigned int> ht)
+template<> Vertex *FibonacciHeap<struct Vertex>::ext_min()
 {
-	//Clean nodeDeg
-	for (int i = 0; i < maxnodesnb; i++)  nodeDeg[i] = nullptr;
-	
-	//Compute min
-	//Add min_childs
-	Vertex *minV = minnode->v;
+	//Save
+	FHChain<struct Vertex*> *cmin = minnode;
+	Vertex *vmin = minnode->v;
+
+	//Add min childs
+	minnode->unlink(nodes);
 	nbnodes--;
-	if (minnode->next == minnode)
-	{
-		nodes = minnode->v->FHchilds;
-	}
-	else 
-	{
-		minnode->prev->next = minnode->next;
-		minnode->next->prev = minnode->prev;
-		nodes = nodes->next;
-		
-	}
+	n--;
 
-	DLChain<Vertex*> *d = minnode->v->FHchilds, *c = d;
+	FHChain<struct Vertex*> *d = minnode->childs, *c = d;
 	if (d != nullptr)
 	{
 		do
 		{
-			nbnodes++; c->v->FHfather = nullptr;
+			nbnodes++; c->father = nullptr;
 			c = c->next;
 		} while (c != d);
 	}
 
-	if (minnode->next != minnode) if (minnode->v->FHchilds != nullptr) merge(nodes, minnode->v->FHchilds);
-
-
-	
-
-
+	if (minnode->childs != nullptr) minnode->childs->insertaslist(nodes);
 
 	//Clean (unique degree)
-	int nbnodes_pr = nbnodes;
 	minnode = nodes;
-	DLChain<Vertex*> *next;
-	for (DLChain<Vertex*> *c = nodes; nbnodes_pr--; c = next)
+	int nbnodes_pr = nbnodes;
+	FHChain<struct Vertex*> *next;
+	for (FHChain<struct Vertex*> *c = nodes; nbnodes_pr--; c = next)
 	{
  		if (c->v->t < minnode->v->t)
 			minnode = c;
 
 		next = c->next;
 
-		while (nodeDeg[c->v->deg] != nullptr) 
+		while (nodeDeg[c->deg] != nullptr) 
 		{
-			DLChain<Vertex*> *cd = nodeDeg[c->v->deg];
+			FHChain<struct Vertex*> *cd = nodeDeg[c->deg];
 			
 			//cd de plus petite value
 			if (cd->v->t > c->v->t)
 			{
-				nodeDeg[c->v->deg] = c;
+				nodeDeg[c->deg] = c;
 				c = cd;
-				cd = nodeDeg[c->v->deg];
+				cd = nodeDeg[c->deg];
 			}
 			if (minnode == c) minnode = cd;
+
 			//déref
-			nodeDeg[c->v->deg] = nullptr;
+			nodeDeg[c->deg] = nullptr;
 
-			//au cas ou nodes devienne fils
-			nodes = cd;
-			if (cd->v->FHchilds == nullptr)
-			{
-				cd->v->FHchilds = c;
-				c->prev->next = c->next;
-				c->next->prev = c->prev;
-				c->next = c;
-				c->prev = c;
-			}
-			else insert(c, cd->v->FHchilds);
-			c->v->FHfather = cd;
-
-			c->v->marked = false;
-			cd->v->deg++;
+			c->unlink(nodes);
+			c->insert(cd->childs);
+			c->father = cd;
+			c->marked = false;
+			cd->deg++;
 
 			nbnodes--;
 			c = cd;
-			
 		}
-		nodeDeg[c->v->deg] = c;
-
-		//print();
+		nodeDeg[c->deg] = c;
 	}
-	
 
-	return minV;
+	//Clean nodeDeg
+	nbnodes_pr = nbnodes;
+	for (FHChain<struct Vertex*> *c = nodes; nbnodes_pr--; c = c->next)	nodeDeg[c->deg] = nullptr;
+
+	delete cmin;
+	return vmin;
 }
 
-void FibonacciHeap<struct Vertex>::set_pr(Vertex *el, int p)
+template<> void FibonacciHeap<struct Vertex>::set_pr(Vertex *el, int p)
 {
 	el->t = p;
-	if (el->t < minnode->v->t) minnode = el->me;
 
-	if (el->FHfather != nullptr && el->FHfather->v->t > el->t)
+	FHChain<struct Vertex*> *cel = el->myFHc;
+	if (el->t < minnode->v->t) minnode = cel;
+
+	if (cel->father != nullptr && cel->father->v->t > el->t)
 	{
-		DLChain<Vertex*> *f;
+		FHChain<struct Vertex*> *f;
 
 		do
 		{
-			el->marked = false;
-			if (el->me->next == el->me) el->FHfather->v->FHchilds = nullptr;
-			else el->FHfather->v->FHchilds = el->me->next;
-			insert(el->me, nodes);
+			cel->marked = false;
+			cel->unlink(cel->father->childs);
+			cel->insert(nodes);
 			nbnodes++;
-			f = el->FHfather;
-			el->FHfather = nullptr;
-			if (f->v->deg == el->deg+1) f->v->deg--;
+			f = cel->father;
+			cel->father = nullptr;
+			if (f->deg == cel->deg+1) f->deg--;
 
-			if (!f->v->marked) { f->v->marked = true; break; };
+			if (!f->marked) { f->marked = true; break; };
 
 			el = f->v;
-		} while (el->FHfather != nullptr);
+		} while (cel->father != nullptr);
 	}
 }
 
-//void FibonacciHeap<struct Vertex>::print(DLChain<Vertex*> *d, int i)
-//{
-//	if (d == nullptr) return;
-//	DLChain<Vertex*> *c = d;
-//	do
-//	{
-//		for (int k = i; k; k--)  std::cout << '\t';
-//		std::cout << c->v->id << ":" << c->v->t << std::endl;
-//		print(c->v->FHchilds, i + 1);
-//	} while ((c = c->next) != d);
-//
-//
-//}
-//
-//template<> void FibonacciHeap<struct Vertex>::print()
-//{
-//	print(nodes, 0);
-//	std::cout << std::endl;
-//	system("PAUSE");
-//}
+template<> void FibonacciHeap<struct Vertex>::print(FHChain<struct Vertex*> *d, int i)
+{
+	if (d == nullptr) return;
+	FHChain<struct Vertex*> *c = d;
+	do
+	{
+		for (int k = i; k; k--)  std::cout << '\t';
+		std::cout << c->v->id << ":" << c->v->t << std::endl;
+		print(c->childs, i + 1);
+	} while ((c = c->next) != d);
 
-//template<> void FibonacciHeap<struct Vertex>::test()
-//{
-//	int nb = nbnodes;
-//	int nb2 = 0;
-//	bool found = false;
-//	DLChain<Vertex*> *d = nodes, *c = d;
-//	if (d != nullptr)
-//	{
-//		do
-//		{
-//			nb2++;
-//			if (c == minnode) found = true;
-//			c = c->next;
-//		} while (c != d);
-//	}
-//	if (n==3297)
-//		system("PAUSE");
-//	if (nb!=nb2 || !found)
-//		system("PAUSE");
-//}
+
+}
+
+template<> void FibonacciHeap<struct Vertex>::print()
+{
+	print(nodes, 0);
+	std::cout << std::endl;
+	system("PAUSE");
+}
+
+template class FibonacciHeap<struct Vertex>;

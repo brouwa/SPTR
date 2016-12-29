@@ -1,32 +1,28 @@
 #pragma once
 #define phi (1 + sqrt(5)) / 2
 
-#include "RoadNetwork.h"
-#include "DLChain.h"
+#include "FHChain.h"
 
 template <typename T> class FibonacciHeap
 {
 public:
 	int n;
 	FibonacciHeap() : n(0), nodes(nullptr), nodeDeg(nullptr), maxnodesnb(0) {}
-	//~FibonacciHeap();
+	~FibonacciHeap();
 	void add(T* el, int p);
 	bool isEmpty();
-	T *ext_min(Hashtable<Vertex, unsigned int> ht);
+	T *ext_min();
 	void set_pr(T *el, int p);
-	void generate_nodedeg();
+	void generate_nodeDeg(int size);
 	int maxnodesnb;
-	//void print(DLChain<T*> *d, int i);
-	//void print();
-	//void test();
-private:
-	DLChain<T*> *nodes;
-	DLChain<T*> *minnode;
-	DLChain<T*> **nodeDeg;
-	int nbnodes;
 
-	static void merge(DLChain<T*> *L1, DLChain<T*> *L2);
-	static void insert(DLChain<T*> *c, DLChain<T*> *L);
+	void print();
+private:
+	FHChain<T*> *nodes;
+	FHChain<T*> *minnode;
+	FHChain<T*> **nodeDeg;
+	int nbnodes;
+	void print(FHChain<T*> *d, int i);
+	static void clean(FHChain<T*> *d);
 };
 
-template class FibonacciHeap<struct Vertex>;

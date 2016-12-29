@@ -7,7 +7,7 @@ class Hashtable
 {
 public:
 	Hashtable(int(*hashCode)(K, int), int N = 1) : n(0), N(N), hashCode(hashCode) { E = new KeyList<T, K>[N]; for (int i = 0; i < N; i++) E[i] = KeyList<T, K>(); };
-	//~Hashtable();
+	~Hashtable();
 	int size();
 	void add(T *value, K key);
 	void add(Entry<T, K> *e);
@@ -23,6 +23,4 @@ private:
 	int(*hashCode)(K, int);
 };
 
-template class Hashtable<std::string, std::string>;
-template class Hashtable<int, int>;
 
