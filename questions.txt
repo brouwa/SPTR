@@ -1,0 +1,25 @@
+B1./ Assume that : there is a vertex v whose reach is R, with R > D/2.
+Then we have a pair of vertices s and t, such that :
+•Some fastest path from s to t passes through vertex v.
+•The travel time from s to v following the fastest path is at least R.
+•The travel time from v to t following the fastest path is at least R.
+Then the travel from s to t is at least 2*R > D, while the diameter of the directed graph is D. This is impossible, and our first assumption was false.
+
+Therefore :
+In a graph whose diameter is D, the reach of a vertex is at most D/2.
+
+B2./ Assume that there exists a pair s in Sin and t in Tout such that some quickest path from s to t passes through v. Then according to the definition of the reach : the reach of v i at least 1 hour.
+Therefore, if the reach of v is less than 1 hour, then there cannot exist a point s in Sin and a point t in Tout, such that some quickest path from s to t passes through v.
+
+B3./ Assume that the reach of v is at least 2 hours. Then we have a pair of vertices A and B, such that :
+•Some fastest path from A to B passes through vertex v.
+•The travel time from A to v following the fastest path is at least 2 hours.
+•The travel time from v to B following the fastest path is at least 2 hours.
+
+On the fastest path from A to B passing through v, let's take 
+•s the point from which the travel time to v is precisely 1 hour
+•t the point to which the travel time from v is exactly 1 hour
+
+Then we have s in Sin (because the travel time from A to v following the fastest path is at least 2 hours) and t in Tout (because the travel time from v to B following the fastest path is at least 2 hours), and some quickest path from s to t passes through v (because s, v and t are in this order part of the quickest path from A to B)
+
+B4./ 
