@@ -3,65 +3,31 @@
 
 #include "stdafx.h"
 
-#include "RoadNetwork.h"
-#include "Hashtable.h"
+#include "math.h"
 
 using namespace std;
 
-
-int hashCode(std::string mystr, int N);
-int hashCodeui(unsigned int n, int N);
-
-int main()
+int main(int argc, char *argv[])
 {
-
-	RoadNetwork rn;
-
-	ifstream myfile;
-	myfile.open("C:\\Users\\Yassir\\Downloads\\RoadNetworks\\data\\france.in");
+	if (argc == 1) return 255;
+	const char * rfile = argv[1],
+		*pfile = "points.js";
 	
-	unsigned id;
-	int lat, lon;
-	unsigned int p1, p2;
-	int t;
-
-	if (myfile.is_open())
+	
+	RoadNetwork *rn = new RoadNetwork;
+	rn->readfromfile(rfile, (float)48.848096, (float)2.344330);
+	Vertex *sr = rn->select_vertex_id(470134);
+	if (sr != nullptr)
 	{
-		do
-		{
-			switch (myfile.get())
-			{
-			case 'v':
-				myfile >> id >> lat >> lon;
-				rn.addV(id, lat, lon);
-				break;
-			case 'a':
-				myfile >> p1 >> p2 >> t;
-				rn.addA(p1, p2, t);
-				break;
-			}
-			myfile.get();
-		} while (!myfile.eof());
+		rn->Dijkstra2(sr);
+		//rn->printroadto(rn->select_vertex_rand(), pfile);
+		rn->printinfile2(pfile);
+		std::cout << "Done!" << endl;
 	}
-	myfile.close();
-	
-	rn.Dijkstra(rn.select_first());
+	delete rn;
 
 	system("PAUSE");
 	return EXIT_SUCCESS;
-}
-
-int hashCode(std::string mystr, int N)
-{
-	int h = 0;
-	int n = mystr.size();
-	while (--n) h = (h + (mystr)[n]) % N;
-	return h;
-}
-
-int hashCodeui(unsigned int n, int N)
-{
-	return n%N;
 }
 
 

@@ -2,6 +2,8 @@
 
 #include "Chain.h"
 
+struct Vertex;
+
 template <typename T, typename K> struct Entry
 {
 	K key;
@@ -15,19 +17,16 @@ class KeyList
 public:
 	int n;
 	KeyList() : n(0), first(nullptr), last(nullptr) {};
-	//~KeyList();
+	~KeyList();
 	Entry<T, K> *find(K key);
 	Entry<T, K> *pop();
 	bool isEmpty();
 	bool add(Entry<T, K> *e);
 	bool del(K key);
-	typedef Entry<T, K> HTEntry;
-	Chain<HTEntry*> *first, *last;
+	Chain<struct Entry<T, K>*> *first, *last;
 private:
 	
 };
 
-template class KeyList<std::string, std::string>;
-template class KeyList<int, int>;
-template class KeyList<struct Vertex, unsigned int>;
+
 

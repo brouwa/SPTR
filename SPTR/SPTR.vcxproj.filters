@@ -39,7 +39,10 @@
     <ClInclude Include="FibonacciHeap.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="DLChain.h">
+    <ClInclude Include="FHChain.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="mman.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
   </ItemGroup>
@@ -65,7 +68,10 @@
     <ClCompile Include="FibonacciHeap.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="DLChain.cpp">
+    <ClCompile Include="FHChain.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="mman.c">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>

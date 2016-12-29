@@ -146,20 +146,27 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Chain.h" />
-    <ClInclude Include="DLChain.h" />
+    <ClInclude Include="FHChain.h" />
     <ClInclude Include="FibonacciHeap.h" />
     <ClInclude Include="Hashtable.h" />
     <ClInclude Include="KeyList.h" />
+    <ClInclude Include="mman.h" />
     <ClInclude Include="RoadNetwork.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Chain.cpp" />
-    <ClCompile Include="DLChain.cpp" />
+    <ClCompile Include="FHChain.cpp" />
     <ClCompile Include="FibonacciHeap.cpp" />
     <ClCompile Include="Hashtable.cpp" />
     <ClCompile Include="KeyList.cpp" />
+    <ClCompile Include="mman.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="RoadNetwork.cpp" />
     <ClCompile Include="SPTR.cpp" />
     <ClCompile Include="stdafx.cpp">
