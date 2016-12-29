@@ -4,14 +4,23 @@
 //
 
 #pragma once
+#define _CRT_SECURE_NO_WARNINGS
+#pragma warning(disable:4996)
 
 #include "targetver.h"
 
 #include <stdio.h>
 #include <tchar.h>
-#include <cstdlib>
 #include <iostream>
 #include <fstream>
+
+
+#include "Chain.h"
+#include "FHChain.h"
+#include "FibonacciHeap.h"
+#include "Hashtable.h"
+#include "KeyList.h"
+#include "RoadNetwork.h"
 
 
 // TODO: faites référence ici aux en-têtes supplémentaires nécessaires au programme
