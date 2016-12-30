@@ -5,7 +5,7 @@
 
 #define II true
 #define targetTime 3600*1000
-#define targetTimeHigh 3600*1000 + 600*1000
+#define targetTimeHigh 2*3600*1000
 
 
 //RoadNetwork::~RoadNetwork()
@@ -153,7 +153,8 @@ int RoadNetwork::Dijkstra(Vertex *sr)
 		Vertex *vmin = fh.ext_min();
 		
 		// Si on est déjà en dehors du cadre de nos recherches, on peut stopper l'exploration
-		if (vmin->t > (targetTime + (!II ? 60000 : 0)))
+		// Uniquement si on interpole pas, sinon il faut pousser plus loin l'exploration
+		if (!II && vmin->t > targetTime)
 			break;
 
 		vmin->computed = true;
@@ -166,24 +167,35 @@ int RoadNetwork::Dijkstra(Vertex *sr)
 			//if not in the heap
 			if (!c->var.to->computed)
 			{
-				to->prec = vmin;
-				if (to->myFHc == nullptr) fh.add(to, vmin->t + c->var.t);
+				if (to->myFHc == nullptr)
+				{
+					fh.add(to, vmin->t + c->var.t);
+					to->prec = vmin;
+				}
 				else
 				{
 					int tu = vmin->t + c->var.t;
-					if (tu < to->t)	fh.set_pr(to, tu);
+					if (tu < to->t)
+					{
+						fh.set_pr(to, tu);
+						to->prec = vmin;
+					}
 				}
-			}
 
 #if II
-			if (vmin->t < targetTime && to->t >= targetTime)
-			{
-				to->IIed = true;
-				to->interLat = interpolation(vmin->lat, to->lat, vmin->t, to->t);
-				to->interLon = interpolation(vmin->lon, to->lon, vmin->t, to->t);
-			}
-			else to->IIed = false;
+				if(to->prec==vmin)
+				{
+					if (vmin->t < targetTime && to->t >= targetTime)
+					{
+						to->IIed = true;
+						to->interLat = interpolation(vmin->lat, to->lat, vmin->t, to->t);
+						to->interLon = interpolation(vmin->lon, to->lon, vmin->t, to->t);
+					}
+					else to->IIed = false;
+				}
 #endif
+			}
+
 			c = c->next;
 		}
 	}
@@ -239,8 +251,9 @@ int RoadNetwork::Dijkstra2(Vertex *sr)
 		Vertex *vmin = fh.ext_min();
 
 		// Si on est déjà en dehors du cadre de nos recherches, on peut stopper l'exploration
-		//if (vmin->t > (targetTimeHigh + (!II ? 60000 : 0)))
-		//	break;
+		// Uniquement si on interpole pas, sinon il faut pousser plus loin l'exploration
+		if (!II && vmin->t > targetTime)
+			break;
 			
 
 		vmin->computed = true;
@@ -261,12 +274,20 @@ int RoadNetwork::Dijkstra2(Vertex *sr)
 			//if not in the heap
 			if (!c->var.to->computed)
 			{
-				to->prec = vmin;
-				if (to->myFHc == nullptr) fh.add(to, vmin->t + c->var.t);
+				
+				if (to->myFHc == nullptr)
+				{
+					fh.add(to, vmin->t + c->var.t);
+					to->prec = vmin;
+				}
 				else
 				{
 					int tu = vmin->t + c->var.t;
-					if (tu < to->t)	fh.set_pr(to, tu);
+					if (tu < to->t)	
+					{
+						fh.set_pr(to, tu);
+						to->prec = vmin;
+					}
 				}
 
 				// Si on est II-ed (c'est à dire situé exactement à targetTime), alors on est candidat pour être III-ed
@@ -277,7 +298,7 @@ int RoadNetwork::Dijkstra2(Vertex *sr)
 					to->hasAnInterestingAncestor = true;
 				}
 				// Si on a un ancêtre potentiellement III-able, on doit le passer à notre descendance
-				if(vmin->hasAnInterestingAncestor)
+				if(vmin->hasAnInterestingAncestor && to->prec==vmin)
 				{
 					to->IIIancestor = vmin->IIIancestor;
 					to->hasAnInterestingAncestor = true;
@@ -285,13 +306,16 @@ int RoadNetwork::Dijkstra2(Vertex *sr)
 			}
 
 #if II
-			if (vmin->t < targetTime && to->t >= targetTime)
+			if (to->prec == vmin)
 			{
-				to->IIed = true;
-				to->interLat = interpolation(vmin->lat, to->lat, vmin->t, to->t);
-				to->interLon = interpolation(vmin->lon, to->lon, vmin->t, to->t);
+				if (vmin->t < targetTime && to->t >= targetTime)
+				{
+					to->IIed = true;
+					to->interLat = interpolation(vmin->lat, to->lat, vmin->t, to->t);
+					to->interLon = interpolation(vmin->lon, to->lon, vmin->t, to->t);
+				}
+				else to->IIed = false;
 			}
-			else to->IIed = false;
 #endif
 			c = c->next;
 		}
