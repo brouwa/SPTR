@@ -54,15 +54,18 @@ class RoadNetwork
 {
 public:
 	int n, m;
-	RoadNetwork() : n(0), m(0), ht(&hashCode, 1024) { };
+	// To plot the isochrone :
+	unsigned int targetTime;
+	unsigned int targetTimeHigh;
+	// To show the points that are exactly at targetTime, but on a way to a point at least at targetTimeHigh
+	bool III;
+	RoadNetwork() : n(0), m(0), ht(&hashCode, 1024), targetTime(0), targetTimeHigh(0), III(false) { };
 	//~RoadNetwork();
 	void readfromfile(const char* file, float latsr, float lonsr);
 	void addVertex(unsigned int id, int lat, int lon);
 	bool addArc(unsigned int frid, unsigned int toid, int t);
 	int Dijkstra(Vertex *sr);
-	int Dijkstra2(Vertex *sr);
 	void printinfile(const char* file);
-	void printinfile2(const char* file);
 	void printroadto(Vertex *to, const char* file);
 	static float distang(float lata, float lona, float latb, float lonb);
 	int interpolation(int c1, int c2, int t1, int t2);

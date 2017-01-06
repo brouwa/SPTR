@@ -2,12 +2,6 @@
 #include "RoadNetwork.h"
 
 
-
-#define II true
-#define targetTime 3600*1000
-#define targetTimeHigh 2*3600*1000
-
-
 //RoadNetwork::~RoadNetwork()
 //{
 //}
@@ -60,7 +54,11 @@ void RoadNetwork::readfromfile(const char* file, float latsr, float lonsr)
 		do { (*(cnb++) = *(++f)); } while (*f != '\n');
 		*cnb = '\0';
 		lat = atoi(nb);
-		if (distang((float)lat / 1000000, (float)lon / 1000000, latsr, lonsr) <= 130.*2. / 6371.)
+		// We only add the vertexes that are not too far from the source
+		// ie not further than the highest interest time (targetTime or targetTimeHigh, depending on 
+		// to which question we answer : represented by III) + 1 hour
+		// The travel time is estimated with : the segment length between the source and the point divided by 130 km/h
+		if (distang((float)lat / 1000000, (float)lon / 1000000, latsr, lonsr) <= 130.*((float)(III?targetTimeHigh:targetTime)/3600000.+1.) / 6371.)
 			addVertex(id, lat, lon);
 		f++;
 	}
@@ -109,6 +107,7 @@ bool RoadNetwork::addArc(unsigned int frid, unsigned int toid, int t)
 	return true;
 }
 
+
 int RoadNetwork::Dijkstra(Vertex *sr)
 {
 	if (sr == 0)
@@ -121,7 +120,7 @@ int RoadNetwork::Dijkstra(Vertex *sr)
 	std::cout << "Beginning Dijkstra:" << endl;
 	time(&tb);
 
-	//Cleaning from last executiion
+	//Cleaning from last execution
 	KeyList<struct Vertex, unsigned int> *E = ht.E;
 	for (int N = ht.N; N--; E++)
 		for (Chain<struct Entry<struct Vertex, unsigned int>*> *c = E->first; c != nullptr; c = c->next)
@@ -146,118 +145,22 @@ int RoadNetwork::Dijkstra(Vertex *sr)
 
 	//Generating nodeDeg
 	fh.generate_nodeDeg(ht.n);
-
-	//Main loop
-	while (!fh.isEmpty())
-	{
-		Vertex *vmin = fh.ext_min();
-		
-		// Si on est déjà en dehors du cadre de nos recherches, on peut stopper l'exploration
-		// Uniquement si on interpole pas, sinon il faut pousser plus loin l'exploration
-		if (!II && vmin->t > targetTime)
-			break;
-
-		vmin->computed = true;
- 		
-		//Processing neighbors
-		Chain<Arc> *c = vmin->neighbors;
-		while (c != nullptr)
-		{
-			Vertex *to = c->var.to;
-			//if not in the heap
-			if (!c->var.to->computed)
-			{
-				if (to->myFHc == nullptr)
-				{
-					fh.add(to, vmin->t + c->var.t);
-					to->prec = vmin;
-				}
-				else
-				{
-					int tu = vmin->t + c->var.t;
-					if (tu < to->t)
-					{
-						fh.set_pr(to, tu);
-						to->prec = vmin;
-					}
-				}
-
-#if II
-				if(to->prec==vmin)
-				{
-					if (vmin->t < targetTime && to->t >= targetTime)
-					{
-						to->IIed = true;
-						to->interLat = interpolation(vmin->lat, to->lat, vmin->t, to->t);
-						to->interLon = interpolation(vmin->lon, to->lon, vmin->t, to->t);
-					}
-					else to->IIed = false;
-				}
-#endif
-			}
-
-			c = c->next;
-		}
-	}
-
-	time(&te);
-	std::cout << "Dijkstra ended sucessfully!" << endl;
-	std::cout << "Ellapsed time: " << difftime(te, tb) << "s" << endl;
-
-	return 0;
-}
-
-int RoadNetwork::Dijkstra2(Vertex *sr)
-{
-	if (sr == 0)
-	{
-		std::cout << "Vertex not found!" << endl;
-		return 1;
-	}
-
-	time_t tb, te;
-	std::cout << "Beginning Dijkstra:" << endl;
-	time(&tb);
-
-	//Cleaning from last executiion
-	KeyList<struct Vertex, unsigned int> *E = ht.E;
-	for (int N = ht.N; N--; E++)
-		for (Chain<struct Entry<struct Vertex, unsigned int>*> *c = E->first; c != nullptr; c = c->next)
-			c->var->value->computed = false;
-
-	//Processing sr
-	this->sr = sr;
-	sr->t = 0;
-	sr->computed = true;
-	sr->IIed = false;
-
-	FibonacciHeap<struct Vertex> fh;
-
-	//Adding first neighbrs
-	Chain<Arc> *c = sr->neighbors;
-	while (c != nullptr)
-	{
-		c->var.to->prec = sr;
-		fh.add(c->var.to, c->var.t);
-		c = c->next;
-	}
-
-	//Generating nodeDeg
-	fh.generate_nodeDeg(ht.n);
-
+	
 	//Main loop
 	while (!fh.isEmpty())
 	{
 		Vertex *vmin = fh.ext_min();
 
-		// Si on est déjà en dehors du cadre de nos recherches, on peut stopper l'exploration
-		// Uniquement si on interpole pas, sinon il faut pousser plus loin l'exploration
-		if (!II && vmin->t > targetTime)
-			break;
-			
+		/* We make the assumption that there are no neighbour points separated by a time superior to an hour
+		 (ie that you can not be stuck on a road without being able to change direction for more than 1 hour)
+		 Therefore, once we are considering points whose reach time from the source is superior to 
+		 (the max interesting time for our algorithm) + 1 hour
+		 we can exit the loop.
+		 Note that the 1 hour extra time is high, and we still compute too much points with this, but have the
+		 assurance that our results are true */
+		if (vmin->t > (III ? targetTimeHigh : targetTime) + 3600*1000)	break;
 
 		vmin->computed = true;
-
 		// Si on a dépassé targetTimeHigh, alors on marque notre ancêtre qui est à targetTime
 		if(vmin->t >= targetTimeHigh && vmin->hasAnInterestingAncestor)
 		{
@@ -268,6 +171,9 @@ int RoadNetwork::Dijkstra2(Vertex *sr)
 
 		//Processing neighbors
 		Chain<Arc> *c = vmin->neighbors;
+
+
+
 		while (c != nullptr)
 		{
 			Vertex *to = c->var.to;
@@ -305,7 +211,6 @@ int RoadNetwork::Dijkstra2(Vertex *sr)
 				}
 			}
 
-#if II
 			if (to->prec == vmin)
 			{
 				if (vmin->t < targetTime && to->t >= targetTime)
@@ -316,7 +221,7 @@ int RoadNetwork::Dijkstra2(Vertex *sr)
 				}
 				else to->IIed = false;
 			}
-#endif
+
 			c = c->next;
 		}
 	}
@@ -370,7 +275,7 @@ Vertex *RoadNetwork::select_vertex_coords(int lat, int lon)
 
 }
 
-void RoadNetwork::printinfile(const char* file)
+void RoadNetwork::printinfile(const char* file )
 {
 	int nbrTargetPoints=0;
 	std::cout << "Exporting points to file " << file << endl;
@@ -383,47 +288,13 @@ void RoadNetwork::printinfile(const char* file)
 		for (Chain<struct Entry<struct Vertex, unsigned int>*> *c = E->first; c != nullptr; c = c->next)
 		{
 			Vertex *u = c->var->value;
-#if II
-			if (u->IIed)
-			{
-				myfile << "\t[" << (float)u->interLat / 1000000 << "," << (float)u->interLon / 1000000 << "]," << endl;
-				nbrTargetPoints++;
-			}
-#else
-			if ((targetTime - 20000 < u->t && u->t < targetTime + 20000) || (targetTime/2 - 10000 < u->t && u->t < targetTime/2 + 10000))
-			{
-				myfile << "\t[" << (float)u->lat / 1000000 << "," << (float)u->lon / 1000000 << "]," << endl;
-				nbrTargetPoints++;
-			}
-#endif
-		}
-	}
-	myfile << "];" << endl;
-	myfile << endl << "var centralMarker =" << endl;
-	myfile << "\t[" << (float)sr->lat / 1000000 << "," << (float)sr->lon / 1000000 << "]" << endl;
-	myfile << ";" << endl;
-	myfile.close();
-	std::cout << nbrTargetPoints << " points are matching our expectations" << endl;
-}
 
-void RoadNetwork::printinfile2(const char* file)
-{
-	int nbrTargetPoints = 0;
-	std::cout << "Exporting points to file " << file << endl;
-	ofstream myfile;
-	myfile.open(file);
-	myfile << endl << "var plottedPoints = [" << endl;
-	KeyList<struct Vertex, unsigned int> *E = ht.E;
-	for (int N = ht.N; N--; E++)
-	{
-		for (Chain<struct Entry<struct Vertex, unsigned int>*> *c = E->first; c != nullptr; c = c->next)
-		{
-			Vertex *u = c->var->value;
-			if (u->IIIed)
+			if ((u->IIed && !III) || (u->IIIed && III))
 			{
 				myfile << "\t[" << (float)u->interLat / 1000000 << "," << (float)u->interLon / 1000000 << "]," << endl;
 				nbrTargetPoints++;
 			}
+
 		}
 	}
 	myfile << "];" << endl;
